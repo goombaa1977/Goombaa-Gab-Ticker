@@ -23,7 +23,6 @@
           -webkit-font-smoothing: antialiased;
       }
 
-      /* Completely Transparent Container */
       #ticker-container {
           position: absolute;
           bottom: 0;
@@ -47,7 +46,6 @@
           gap: 15px;
       }
 
-      /* Styled Rounded Message Cards */
       .message {
           background: linear-gradient(145deg, #1a2a48, #162238);
           padding: 8px 18px;
@@ -197,11 +195,6 @@
             </div>
         `;
 
-        const currentTrackWidth = tickerTrack.offsetWidth;
-        if (currentPosX < -currentTrackWidth) {
-            currentPosX = window.innerWidth;
-        }
-
         tickerTrack.appendChild(messageDiv);
         
         while (tickerTrack.children.length > MAX_MESSAGES) {
@@ -222,7 +215,7 @@
         currentPosX -= SCROLL_SPEED * delta;
 
         const trackWidth = tickerTrack.offsetWidth;
-        if (currentPosX < -trackWidth && trackWidth > 0) {
+        if (trackWidth > 0 && currentPosX < -trackWidth) {
             currentPosX = window.innerWidth;
         }
 
