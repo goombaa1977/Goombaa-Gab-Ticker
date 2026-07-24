@@ -164,8 +164,17 @@
         `;
     }
 
-    function addMessageToOverlay(data) {
-        if (!data) return;
+    function addMessageToOverlay(raw) {
+        if (!raw) return;
+
+        // Unpack Social Stream Ninja wrappers
+        let data = raw;
+        if (data.dataReceived && data.dataReceived.overlayNinja) {
+            data = data.dataReceived.overlayNinja;
+        } else if (data.overlayNinja) {
+            data = data.overlayNinja;
+        }
+        
         if (!data.chatname && !data.chatmessage && !data.hasDonation && !data.contentimg){
             return;
         }
@@ -219,25 +228,19 @@
         requestAnimationFrame(animate);
     }
 
-    // LISTENER 1: Universal Window Message Listener (for Extension/Dock direct sending)
+    // LISTENER 1: Window PostMessage
     window.addEventListener("message", function (e) {
         if (!e.data) return;
-        if (e.data.overlayNinja) {
-            addMessageToOverlay(e.data.overlayNinja);
-        } else if (e.data.dataReceived && e.data.dataReceived.overlayNinja) {
-            addMessageToOverlay(e.data.dataReceived.overlayNinja);
-        } else if (typeof e.data === "object" && (e.data.chatmessage || e.data.chatname)) {
-            addMessageToOverlay(e.data);
-        }
+        addMessageToOverlay(e.data);
     });
 
-    // LISTENER 2: VDO Ninja Embedded Frame (for remote session syncing)
+    // LISTENER 2: VDO Ninja Frame Bridge
     var iframe = document.createElement("iframe");
     iframe.src = "https://vdo.socialstream.ninja/?ln&salt=vdo.ninja&password="+encodeURIComponent(password)+"&push&label=dock&vd=0&ad=0&novideo&noaudio&autostart&cleanoutput&room="+roomID;
     iframe.style.cssText = "width: 0px; height: 0px; position: fixed; left: -100px; top: -100px;";
     document.body.appendChild(iframe);
 
-    // LISTENER 3: Direct WebSockets (for cloud room sync)
+    // LISTENER 3: Direct WebSockets
     var socketserver = new WebSocket("wss://io.socialstream.ninja");
     socketserver.onopen = function (){
         socketserver.send(JSON.stringify({"join": roomID, "out": 3, "in": 4}));
