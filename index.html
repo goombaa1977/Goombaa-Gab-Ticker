@@ -13,7 +13,7 @@
           width: 100%;
           height: 100%;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background-color: transparent;
+          background-color: transparent !important;
           overflow: hidden;
           box-sizing: border-box;
       }
@@ -164,11 +164,11 @@
         `;
     }
 
-    function addMessageToOverlay(raw) {
-        if (!raw) return;
+    function addMessageToOverlay(eventData) {
+        if (!eventData) return;
 
-        // Unpack Social Stream Ninja wrappers
-        let data = raw;
+        // Extract native Social Stream Ninja data
+        let data = eventData;
         if (data.dataReceived && data.dataReceived.overlayNinja) {
             data = data.dataReceived.overlayNinja;
         } else if (data.overlayNinja) {
@@ -228,31 +228,17 @@
         requestAnimationFrame(animate);
     }
 
-    // LISTENER 1: Window PostMessage
+    // NATIVE LISTENER: Catches local extension postMessage & iframe signals natively
     window.addEventListener("message", function (e) {
         if (!e.data) return;
         addMessageToOverlay(e.data);
     });
 
-    // LISTENER 2: VDO Ninja Frame Bridge
+    // NATIVE IFRAME BRIDGE: Connects natively to room without extra API settings
     var iframe = document.createElement("iframe");
     iframe.src = "https://vdo.socialstream.ninja/?ln&salt=vdo.ninja&password="+encodeURIComponent(password)+"&push&label=dock&vd=0&ad=0&novideo&noaudio&autostart&cleanoutput&room="+roomID;
     iframe.style.cssText = "width: 0px; height: 0px; position: fixed; left: -100px; top: -100px;";
     document.body.appendChild(iframe);
-
-    // LISTENER 3: Direct WebSockets
-    var socketserver = new WebSocket("wss://io.socialstream.ninja");
-    socketserver.onopen = function (){
-        socketserver.send(JSON.stringify({"join": roomID, "out": 3, "in": 4}));
-    };
-    socketserver.addEventListener('message', function (event) {
-        if (event.data){
-            try {
-                var data = JSON.parse(event.data);
-                if (data) { addMessageToOverlay(data); }
-            } catch (error) {}
-        }
-    });
 
     requestAnimationFrame(animate);
 </script>
