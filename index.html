@@ -130,11 +130,11 @@
     var urlParams = new URLSearchParams(window.location.search);
     var roomID = urlParams.get("session") || "aFC6DXe5k2";
     var password = urlParams.get("password") || urlParams.get("pass") || urlParams.get("pw") || "false";
-    
+
     // Ticker Settings
     const SCROLL_SPEED = 120; // Pixels per second
-    const MAX_MESSAGES = 8;
-    
+    const MAX_MESSAGES = 30;
+
     const tickerTrack = document.getElementById('ticker-track');
     let currentPosX = window.innerWidth;
     let lastTimestamp = null;
@@ -142,7 +142,7 @@
     // Custom Turtle Shell SVG Generator based on platform
     function getTurtleShellSVG(platformType) {
         const type = String(platformType || "").toLowerCase();
-        
+
         let primaryColor = "#4CD137"; // Green default
         let detailColor = "#2ED573";
 
@@ -174,86 +174,47 @@
         `;
     }
 
-function addMessageToOverlay(data) {
+    function addMessageToOverlay(data) {
+        if (!data.chatname && !data.chatmessage && !data.hasDonation && !data.contentimg){
+            return;
+        }
 
-    // Accept multiple Social Stream Ninja formats
-    const chatName =
-        data.chatname ||
-        data.username ||
-        data.author ||
-        data.user ||
-        data.name ||
-        "";
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
 
-    const chatMessage =
-        data.chatmessage ||
-        data.message ||
-        data.text ||
-        data.chat ||
-        "";
+        var chatbadgesHtml = "";
+        if (data.chatbadges) {
+            data.chatbadges.forEach(badge => {
+                if (typeof badge === "object" && badge.src) {
+                    chatbadgesHtml += `<img class='badge' src='${badge.src}' alt='badge'>`;
+                } else if (typeof badge === "string") { 
+                    chatbadgesHtml += `<img class='badge' src='${badge}' alt='badge'>`;
+                }
+            });
+        }
 
-    if (!chatName && !chatMessage && !data.hasDonation && !data.contentimg){
-        return;
+        const shellIconHtml = getTurtleShellSVG(data.type);
+        const avatarHtml = data.chatimg ? `<div class="avatar-wrapper"><div class="avatar" style="background-image: url('${data.chatimg}');"></div></div>` : '';
+        const nameHtml = data.chatname ? `<span class="name">${data.chatname}:</span>` : '';
+        const messageTextHtml = data.chatmessage ? `<span class="text">${data.chatmessage}</span>` : '';
+
+        messageDiv.innerHTML = `
+            <div class="message-content-wrapper">
+                ${avatarHtml}
+                ${shellIconHtml}
+                ${nameHtml}
+                ${chatbadgesHtml}
+                ${messageTextHtml}
+                <span class="separator">🔥</span>
+            </div>
+        `;
+
+        tickerTrack.appendChild(messageDiv);
+
+        while (tickerTrack.children.length > MAX_MESSAGES) {
+            tickerTrack.removeChild(tickerTrack.firstChild);
+        }
     }
-
-    const platform =
-        data.type ||
-        data.platform ||
-        data.source ||
-        "";
-
-    const avatar =
-        data.chatimg ||
-        data.avatar ||
-        data.profileImage ||
-        "";
-
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message');
-
-    let chatbadgesHtml = "";
-
-    if (Array.isArray(data.chatbadges)) {
-        data.chatbadges.forEach(badge => {
-            if (typeof badge === "object" && badge.src) {
-                chatbadgesHtml += `<img class='badge' src='${badge.src}' alt='badge'>`;
-            } else if (typeof badge === "string") {
-                chatbadgesHtml += `<img class='badge' src='${badge}' alt='badge'>`;
-            }
-        });
-    }
-
-    const shellIconHtml = getTurtleShellSVG(platform);
-
-    const avatarHtml = avatar
-        ? `<div class="avatar-wrapper"><div class="avatar" style="background-image:url('${avatar}')"></div></div>`
-        : '';
-
-    const nameHtml = chatName
-        ? `<span class="name">${chatName}:</span>`
-        : '';
-
-    const messageTextHtml = chatMessage
-        ? `<span class="text">${chatMessage}</span>`
-        : '';
-
-    messageDiv.innerHTML = `
-        <div class="message-content-wrapper">
-            ${avatarHtml}
-            ${shellIconHtml}
-            ${nameHtml}
-            ${chatbadgesHtml}
-            ${messageTextHtml}
-            <span class="separator">🔥</span>
-        </div>
-    `;
-
-    tickerTrack.appendChild(messageDiv);
-
-    while (tickerTrack.children.length > MAX_MESSAGES) {
-        tickerTrack.removeChild(tickerTrack.firstChild);
-    }
-}
 
     // Continuous Animation Loop
     function animate(timestamp) {
@@ -277,7 +238,7 @@ function addMessageToOverlay(data) {
     iframe.src = "https://vdo.socialstream.ninja/?ln&salt=vdo.ninja&password="+encodeURIComponent(password)+"&push&label=dock&vd=0&ad=0&novideo&noaudio&autostart&cleanoutput&room="+roomID;
     iframe.style.cssText = "width: 0px; height: 0px; position: fixed; left: -100px; top: -100px;";
     document.body.appendChild(iframe);
-    
+
     window.addEventListener("message", function (e) {
         if (e.source != iframe.contentWindow) return;
         if (e.data && typeof e.data === "object" && e.data.dataReceived && e.data.dataReceived.overlayNinja) {
@@ -302,4 +263,5 @@ function addMessageToOverlay(data) {
     requestAnimationFrame(animate);
 </script>
 </body>
+</html>
 </html>
