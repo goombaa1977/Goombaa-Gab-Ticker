@@ -133,7 +133,6 @@
     let currentPosX = window.innerWidth;
     let lastTimestamp = null;
 
-    // Detailed Vector Turtle Shell SVG Generator
     function getShellSvg(type) {
         let fillPrimary = "#2ecc71";   
         let fillSecondary = "#27ae60"; 
@@ -168,7 +167,6 @@
     function addMessageToOverlay(eventData) {
         if (!eventData) return;
 
-        // Unwrap incoming Social Stream Ninja data
         let data = eventData;
         if (data.dataReceived && data.dataReceived.overlayNinja) {
             data = data.dataReceived.overlayNinja;
@@ -229,30 +227,34 @@
         requestAnimationFrame(animate);
     }
 
-    // Global PostMessage Listener (Catches both extension and dock events)
+    // Window PostMessage Listener
     window.addEventListener("message", function (e) {
         if (!e.data) return;
         addMessageToOverlay(e.data);
     });
 
-    // Native Embedded Iframe Bridge
-    var iframe = document.createElement("iframe");
-    iframe.src = "https://vdo.socialstream.ninja/?ln&salt=vdo.ninja&password="+encodeURIComponent(password)+"&push&label=dock&vd=0&ad=0&novideo&noaudio&autostart&cleanoutput&room="+roomID;
-    iframe.style.cssText = "width: 0px; height: 0px; position: fixed; left: -100px; top: -100px;";
-    document.body.appendChild(iframe);
+    // Multi-Server Cluster WebSocket Listener
+    const servers = [
+        "wss://io.socialstream.ninja",
+        "wss://server2.socialstream.ninja",
+        "wss://server3.socialstream.ninja"
+    ];
 
-    // WebSocket Backup Connection
-    var socketserver = new WebSocket("wss://io.socialstream.ninja");
-    socketserver.onopen = function (){
-        socketserver.send(JSON.stringify({"join": roomID, "out": 3, "in": 4}));
-    };
-    socketserver.addEventListener('message', function (event) {
-        if (event.data){
-            try {
-                var data = JSON.parse(event.data);
-                if (data) { addMessageToOverlay(data); }
-            } catch (error) {}
-        }
+    servers.forEach(serverUrl => {
+        try {
+            var socketserver = new WebSocket(serverUrl);
+            socketserver.onopen = function (){
+                socketserver.send(JSON.stringify({"join": roomID, "out": 3, "in": 4}));
+            };
+            socketserver.addEventListener('message', function (event) {
+                if (event.data){
+                    try {
+                        var data = JSON.parse(event.data);
+                        if (data) { addMessageToOverlay(data); }
+                    } catch (error) {}
+                }
+            });
+        } catch (e) {}
     });
 
     requestAnimationFrame(animate);
