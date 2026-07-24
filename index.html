@@ -95,7 +95,6 @@
         <div id="ticker-track"></div>
     </div>
 
-    <!-- Hidden Bridge Iframe matching Desktop App Domain -->
     <iframe id="ssn-bridge" 
             style="display:none;" 
             allow="autoplay; camera; microphone; fullscreen; picture-in-picture; display-capture; screen-wake-lock"
@@ -111,7 +110,6 @@
 
         const track = document.getElementById('ticker-track');
 
-        // Set exact iframe bridge URL matching Social Stream Ninja's cloud dock
         const bridgeFrame = document.getElementById('ssn-bridge');
         if (bridgeFrame) {
             bridgeFrame.src = `https://socialstream.ninja/dock.html?session=${sessionId}&api=1`;
@@ -121,15 +119,24 @@
             return 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f422.png';
         }
 
-        function addMessageToTicker(data) {
-            if (!data) return;
+        function addMessageToTicker(rawData) {
+            if (!rawData) return;
 
-            const name = data.chatname || data.name || (data.detail && data.detail.chatname);
-            const msg = data.chatmessage || data.message || (data.detail && data.detail.chatmessage);
-            const avatar = data.userIcon || data.avatar || (data.detail && data.detail.userIcon) || 'https://dummyimage.com/100x100/000/fff&text=G';
-            const source = data.type || data.source || (data.detail && data.detail.type) || 'twitch';
+            // Unpack nested payload layers if present
+            let data = rawData;
+            if (data.detail) data = data.detail;
+            if (data.data) data = data.data;
+            if (data.msg) data = data.msg;
 
-            if (!name || !msg) return;
+            const name = data.chatname || data.name || data.username;
+            const msg = data.chatmessage || data.message || data.text;
+            const avatar = data.userIcon || data.avatar || 'https://dummyimage.com/100x100/000/fff&text=G';
+            const source = data.type || data.source || 'twitch';
+
+            if (!name || !msg) {
+                console.log("Unpacked object missing chat properties:", data);
+                return;
+            }
 
             console.log("SUCCESS! Displaying chat bubble:", name, msg);
 
@@ -157,18 +164,15 @@
             );
         }
 
-        // 1. Listen for iframe postMessage events
         window.addEventListener('message', (event) => {
             if (!event.data) return;
             let data = event.data;
             if (typeof data === 'string') {
                 try { data = JSON.parse(data); } catch (e) { return; }
             }
-            console.log("Received window event:", data);
             addMessageToTicker(data);
         });
 
-        // 2. Direct Fallback WebSocket Connection
         function initDirectSocket() {
             try {
                 const ws = new WebSocket(`wss://io.socialstream.ninja/ws?session=${sessionId}`);
@@ -176,13 +180,10 @@
                 ws.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
-                        console.log("Received WebSocket data:", data);
                         addMessageToTicker(data);
                     } catch (e) {}
                 };
-            } catch (err) {
-                console.log("WebSocket init error:", err);
-            }
+            } catch (err) {}
         }
 
         initDirectSocket();
