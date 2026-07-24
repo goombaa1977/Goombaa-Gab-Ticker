@@ -33,6 +33,7 @@
           align-items: center;
           overflow: hidden;
           white-space: nowrap;
+          background: transparent;
       }
 
       #ticker-track {
@@ -45,7 +46,6 @@
           gap: 15px;
       }
 
-      /* Large Message Bubble for Ticker Bar */
       .message {
           background: linear-gradient(145deg, #1a2a48, #162238);
           padding: 8px 18px;
@@ -106,7 +106,6 @@
           color: #ffffff;
       }
 
-      /* Dynamic Turtle Shell Styling */
       .separator-shell {
           width: 28px;
           height: 28px;
@@ -128,14 +127,14 @@
     var password = urlParams.get("password") || urlParams.get("pass") || urlParams.get("pw") || "false";
     
     // Ticker Settings
-    const SCROLL_SPEED = 145; // Increased speed slightly (was 120)
-    const MAX_MESSAGES = 8;   
+    const SCROLL_SPEED = 145; // Speed setting
+    const MAX_MESSAGES = 8;   // Max messages cap
     
     const tickerTrack = document.getElementById('ticker-track');
     let currentPosX = window.innerWidth;
     let lastTimestamp = null;
 
-    // Helper function to return platform-specific shell SVG colors
+    // Helper function for platform shell colors
     function getShellSvg(type) {
         let fillPrimary = "#2ecc71";   // Default Green
         let fillSecondary = "#27ae60"; 
@@ -154,7 +153,7 @@
         } else if (platform.includes('tiktok')) {
             fillPrimary = "#111111";   // TikTok Black
             fillSecondary = "#222222";
-            strokeColor = "#00F2FE";   // TikTok Cyan Accent
+            strokeColor = "#00F2FE";   // TikTok Cyan
         }
 
         return `
@@ -189,7 +188,6 @@
         const messageTextHtml = data.chatmessage ? `<span class="text">${data.chatmessage}</span>` : '';
         const shellIconHtml = getShellSvg(data.type);
 
-        // Stripped out source icon and badges for a clean look
         messageDiv.innerHTML = `
             <div class="message-content-wrapper">
                 ${avatarHtml}
@@ -202,7 +200,12 @@
         tickerTrack.appendChild(messageDiv);
         
         while (tickerTrack.children.length > MAX_MESSAGES) {
-            tickerTrack.removeChild(tickerTrack.firstChild);
+            const firstChild = tickerTrack.firstChild;
+            if (firstChild) {
+                const childWidth = firstChild.offsetWidth + 15; 
+                tickerTrack.removeChild(firstChild);
+                currentPosX += childWidth; 
+            }
         }
     }
 
@@ -214,7 +217,7 @@
         currentPosX -= SCROLL_SPEED * delta;
 
         const trackWidth = tickerTrack.offsetWidth;
-        if (currentPosX < -trackWidth && trackWidth > 0) {
+        if (trackWidth > 0 && currentPosX < -trackWidth) {
             currentPosX = window.innerWidth;
         }
 
