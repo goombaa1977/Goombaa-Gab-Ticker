@@ -23,6 +23,7 @@
           -webkit-font-smoothing: antialiased;
       }
 
+      /* Single Full-Width Banner Bar */
       #ticker-container {
           position: absolute;
           bottom: 0;
@@ -33,6 +34,9 @@
           align-items: center;
           overflow: hidden;
           white-space: nowrap;
+          background: linear-gradient(145deg, #1a2a48, #162238);
+          border-top: 2px solid #2e3b55;
+          box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);
       }
 
       #ticker-track {
@@ -42,15 +46,11 @@
           white-space: nowrap;
           position: absolute;
           left: 0;
-          gap: 15px;
+          gap: 20px;
       }
 
+      /* Inline Message Segment (No individual backgrounds) */
       .message {
-          background: linear-gradient(145deg, #1a2a48, #162238);
-          padding: 8px 18px;
-          border-radius: 16px;
-          border: 2px solid #2e3b55;
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
           color: #e4e6eb;
           flex-shrink: 0;
           display: inline-flex;
@@ -108,7 +108,7 @@
       .separator-shell {
           width: 28px;
           height: 28px;
-          margin-left: 12px;
+          margin-left: 15px;
           flex-shrink: 0;
           vertical-align: middle;
       }
@@ -170,15 +170,6 @@
         
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message');
-
-        let leftEdgeColor = null;
-        if (typeof getColorFromType === 'function' && data.type) {
-            try { leftEdgeColor = getColorFromType(data.type); } catch (e) {}
-        }
-        if (leftEdgeColor) {
-            messageDiv.style.borderLeft = `4px solid ${leftEdgeColor}`;
-            messageDiv.style.paddingLeft = '10px';
-        }
         
         const avatarHtml = data.chatimg ? `<div class="avatar-wrapper"><div class="avatar" style="background-image: url('${data.chatimg}');"></div></div>` : '';
         const nameHtml = data.chatname ? `<div class="name-bg"><span class="name">${data.chatname}</span></div>` : '';
@@ -194,7 +185,6 @@
             </div>
         `;
 
-        // If the track is completely off-screen, reset the lead position to the right edge
         const currentTrackWidth = tickerTrack.offsetWidth;
         if (currentPosX < -currentTrackWidth) {
             currentPosX = window.innerWidth;
@@ -202,13 +192,12 @@
 
         tickerTrack.appendChild(messageDiv);
         
-        // Remove oldest message without resetting scroll positions
         while (tickerTrack.children.length > MAX_MESSAGES) {
             const firstChild = tickerTrack.firstChild;
             if (firstChild) {
-                const childWidth = firstChild.offsetWidth + 15; // Width + gap
+                const childWidth = firstChild.offsetWidth + 20; 
                 tickerTrack.removeChild(firstChild);
-                currentPosX += childWidth; // Adjust X position so remaining elements don't jump
+                currentPosX += childWidth; 
             }
         }
     }
