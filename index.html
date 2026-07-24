@@ -33,7 +33,6 @@
           align-items: center;
           overflow: hidden;
           white-space: nowrap;
-          background: transparent;
       }
 
       #ticker-track {
@@ -46,6 +45,7 @@
           gap: 15px;
       }
 
+      /* Large Message Bubble for Ticker Bar */
       .message {
           background: linear-gradient(145deg, #1a2a48, #162238);
           padding: 8px 18px;
@@ -106,6 +106,7 @@
           color: #ffffff;
       }
 
+      /* Dynamic Turtle Shell Styling */
       .separator-shell {
           width: 28px;
           height: 28px;
@@ -126,32 +127,34 @@
     var roomID = urlParams.get("session") || "aFC6DXe5k2";
     var password = urlParams.get("password") || urlParams.get("pass") || urlParams.get("pw") || "false";
     
-    const SCROLL_SPEED = 145;
+    // Ticker Settings
+    const SCROLL_SPEED = 145; // Increased speed slightly (was 120)
     const MAX_MESSAGES = 8;   
     
     const tickerTrack = document.getElementById('ticker-track');
     let currentPosX = window.innerWidth;
     let lastTimestamp = null;
 
+    // Helper function to return platform-specific shell SVG colors
     function getShellSvg(type) {
-        let fillPrimary = "#2ecc71";   
+        let fillPrimary = "#2ecc71";   // Default Green
         let fillSecondary = "#27ae60"; 
         let strokeColor = "#1b5e20";   
 
         const platform = (type || '').toLowerCase();
 
         if (platform.includes('twitch')) {
-            fillPrimary = "#9146FF";   
+            fillPrimary = "#9146FF";   // Twitch Purple
             fillSecondary = "#772CE8";
             strokeColor = "#3c1175";
         } else if (platform.includes('youtube')) {
-            fillPrimary = "#FF0000";   
+            fillPrimary = "#FF0000";   // YouTube Red
             fillSecondary = "#CC0000";
             strokeColor = "#660000";
         } else if (platform.includes('tiktok')) {
-            fillPrimary = "#111111";   
+            fillPrimary = "#111111";   // TikTok Black
             fillSecondary = "#222222";
-            strokeColor = "#00F2FE";   
+            strokeColor = "#00F2FE";   // TikTok Cyan Accent
         }
 
         return `
@@ -186,6 +189,7 @@
         const messageTextHtml = data.chatmessage ? `<span class="text">${data.chatmessage}</span>` : '';
         const shellIconHtml = getShellSvg(data.type);
 
+        // Stripped out source icon and badges for a clean look
         messageDiv.innerHTML = `
             <div class="message-content-wrapper">
                 ${avatarHtml}
@@ -198,12 +202,7 @@
         tickerTrack.appendChild(messageDiv);
         
         while (tickerTrack.children.length > MAX_MESSAGES) {
-            const firstChild = tickerTrack.firstChild;
-            if (firstChild) {
-                const childWidth = firstChild.offsetWidth + 15; 
-                tickerTrack.removeChild(firstChild);
-                currentPosX += childWidth; 
-            }
+            tickerTrack.removeChild(tickerTrack.firstChild);
         }
     }
 
@@ -215,7 +214,7 @@
         currentPosX -= SCROLL_SPEED * delta;
 
         const trackWidth = tickerTrack.offsetWidth;
-        if (trackWidth > 0 && currentPosX < -trackWidth) {
+        if (currentPosX < -trackWidth && trackWidth > 0) {
             currentPosX = window.innerWidth;
         }
 
