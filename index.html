@@ -96,7 +96,7 @@
         <div id="ticker-track"></div>
     </div>
 
-    <!-- Fixed SSN Bridge iframe with feature permissions enabled -->
+    <!-- Hidden SSN iframe bridge -->
     <iframe id="ssn-bridge" 
             style="display:none;" 
             allow="autoplay; camera; microphone; fullscreen; picture-in-picture; display-capture; screen-wake-lock"
@@ -112,38 +112,33 @@
 
         const track = document.getElementById('ticker-track');
 
-        // Update iframe source dynamically if a session parameter is in the URL
         const bridgeFrame = document.getElementById('ssn-bridge');
         if (bridgeFrame && sessionId) {
             bridgeFrame.src = `https://socialstream.ninja/dock.html?session=${sessionId}&api=1`;
         }
 
         function getPlatformIcon(type) {
-            const platform = (type || '').toLowerCase();
-            if (platform.includes('youtube')) {
-                return 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f422.png';
-            } else if (platform.includes('tiktok')) {
-                return 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f422.png';
-            } else {
-                return 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f422.png';
-            }
+            return 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f422.png';
         }
 
         function addMessageToTicker(data) {
             if (!data) return;
-            
-            const name = data.chatname || data.name || (data.detail && data.detail.chatname);
-            const msg = data.chatmessage || data.message || (data.detail && data.detail.chatmessage);
+
+            // Deep extract properties regardless of nesting
+            const name = data.chatname || data.name || (data.detail && data.detail.chatname) || (data.data && data.data.chatname);
+            const msg = data.chatmessage || data.message || (data.detail && data.detail.chatmessage) || (data.data && data.data.chatmessage);
             const avatar = data.userIcon || data.avatar || (data.detail && data.detail.userIcon) || 'https://dummyimage.com/100x100/000/fff&text=G';
             const source = data.type || data.source || (data.detail && data.detail.type) || 'twitch';
 
-            if (!name || !msg) return;
+            if (!name || !msg) {
+                console.log("Received data object missing chat fields:", data);
+                return;
+            }
 
-            console.log("Adding chat bubble to ticker:", name, msg);
+            console.log("SUCCESS! Displaying chat bubble:", name, msg);
 
             const bubble = document.createElement('div');
             bubble.className = 'chat-bubble';
-
             const iconUrl = getPlatformIcon(source);
 
             bubble.innerHTML = `
@@ -166,7 +161,7 @@
             );
         }
 
-        // Event listener receiving message events from the bridge iframe or standalone app
+        // Broad event listener
         window.addEventListener('message', (event) => {
             if (!event.data) return;
             
@@ -175,7 +170,11 @@
                 try { data = JSON.parse(data); } catch (e) { return; }
             }
 
-            if (data.action === 'chat' || data.chatmessage || data.type === 'chat' || (data.detail && data.detail.chatmessage)) {
+            // Log everything received to pinpoint structure
+            console.log("Raw event received:", data);
+
+            // Handle SSN event payloads
+            if (data.action === 'chat' || data.chatmessage || data.type === 'chat' || (data.detail && data.detail.chatmessage) || (data.data && data.data.chatmessage)) {
                 addMessageToTicker(data);
             }
         });
