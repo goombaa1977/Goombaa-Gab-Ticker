@@ -89,11 +89,6 @@
             color: #F0F0F0;
             font-weight: 700;
         }
-
-        /* Hidden SSN Bridge iframe */
-        #ssn-bridge {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -102,14 +97,10 @@
         <div id="ticker-track"></div>
     </div>
 
-    <!-- Social Stream Ninja Multi-Node Listener Bridge -->
-    <iframe id="ssn-bridge" src="https://vdo.socialstream.ninja/?session=aFC6DXe5k2&api"></iframe>
-
     <script>
         const MAX_MESSAGES = 8;
         const DEFAULT_SESSION = 'aFC6DXe5k2';
         
-        // Extract session from URL query param if present
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('session') || DEFAULT_SESSION;
 
@@ -119,48 +110,51 @@
         function getPlatformIcon(type) {
             const platform = (type || '').toLowerCase();
             if (platform.includes('youtube')) {
-                // Red Shell
                 return 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f422.png';
             } else if (platform.includes('tiktok')) {
-                // Neon / Green Shell
                 return 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f422.png';
             } else {
-                // Purple Shell (Twitch / Default)
                 return 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f422.png';
             }
         }
 
         function addMessageToTicker(data) {
-            if (!data || !data.chatname) return;
+            if (!data) return;
+            
+            // Extract chat properties handling both extension & desktop app payload structures
+            const name = data.chatname || data.name || (data.detail && data.detail.chatname);
+            const msg = data.chatmessage || data.message || (data.detail && data.detail.chatmessage);
+            const avatar = data.userIcon || data.avatar || (data.detail && data.detail.userIcon) || 'https://dummyimage.com/100x100/000/fff&text=G';
+            const source = data.type || data.source || (data.detail && data.detail.type) || 'twitch';
+
+            if (!name || !msg) return;
 
             const bubble = document.createElement('div');
             bubble.className = 'chat-bubble';
 
-            const avatarUrl = data.userIcon || data.avatar || 'https://dummyimage.com/100x100/000/fff&text=G';
-            const iconUrl = getPlatformIcon(data.type || data.source);
+            const iconUrl = getPlatformIcon(source);
 
             bubble.innerHTML = `
-                <img class="avatar" src="${avatarUrl}" onerror="this.src='https://dummyimage.com/100x100/000/fff&text=G'" alt="avatar">
+                <img class="avatar" src="${avatar}" onerror="this.src='https://dummyimage.com/100x100/000/fff&text=G'" alt="avatar">
                 <img class="platform-icon" src="${iconUrl}" alt="platform">
-                <span class="username">${escapeHTML(data.chatname)}:</span>
-                <span class="message-text">${escapeHTML(data.chatmessage || '')}</span>
+                <span class="username">${escapeHTML(name)}:</span>
+                <span class="message-text">${escapeHTML(msg)}</span>
             `;
 
             track.appendChild(bubble);
 
-            // Cap stored bubbles at 8 messages max
             while (track.children.length > MAX_MESSAGES) {
                 track.removeChild(track.firstChild);
             }
         }
 
         function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
+            return String(str).replace(/[&<>'"]/g, 
                 tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
             );
         }
 
-        // Global Event Listener for Social Stream Ninja (App, Extension, & WebSockets)
+        // Catch messages sent from SSN Dock/App (window postMessage)
         window.addEventListener('message', (event) => {
             if (!event.data) return;
             
@@ -169,31 +163,17 @@
                 try { data = JSON.parse(data); } catch (e) { return; }
             }
 
-            if (data.action === 'chat' || data.chatmessage) {
+            // Universal unpacker for Desktop App & Extension
+            if (data.action === 'chat' || data.chatmessage || data.type === 'chat' || (data.detail && data.detail.chatmessage)) {
                 addMessageToTicker(data);
             }
         });
 
-        // Direct WebSocket Fallback Listener
-        function connectWebSocket() {
-            const ws = new WebSocket(`wss://io.socialstream.ninja?session=${sessionId}`);
-            
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.chatmessage) {
-                        addMessageToTicker(data);
-                    }
-                } catch(e) {}
-            };
-
-            ws.onclose = () => {
-                setTimeout(connectWebSocket, 3000); // Auto-reconnect if dropped
-            };
-        }
-
-        // Initialize Direct Socket
-        connectWebSocket();
+        // Dynamically load SSN's official WebRTC listener bridge
+        const ssnIframe = document.createElement('iframe');
+        ssnIframe.style.display = 'none';
+        ssnIframe.src = `https://socialstream.ninja/dock.html?session=${sessionId}&api=1`;
+        document.body.appendChild(ssnIframe);
     </script>
 </body>
 </html>
