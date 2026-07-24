@@ -46,6 +46,7 @@
           gap: 15px;
       }
 
+      /* Segmented Message Cards */
       .message {
           background: linear-gradient(145deg, #1a2a48, #162238);
           padding: 8px 18px;
@@ -106,6 +107,7 @@
           color: #ffffff;
       }
 
+      /* Dynamic Platform Turtle Shell */
       .separator-shell {
           width: 28px;
           height: 28px;
@@ -124,8 +126,8 @@
 <script>
     var urlParams = new URLSearchParams(window.location.search);
     var roomID = urlParams.get("session") || "aFC6DXe5k2";
-    var password = urlParams.get("password") || urlParams.get("pass") || urlParams.get("pw") || "false";
     
+    // Ticker Parameters
     const SCROLL_SPEED = 145; 
     const MAX_MESSAGES = 8;   
     
@@ -133,25 +135,26 @@
     let currentPosX = window.innerWidth;
     let lastTimestamp = null;
 
+    // Platform-specific Shell SVGs
     function getShellSvg(type) {
-        let fillPrimary = "#2ecc71";   
+        let fillPrimary = "#2ecc71";   // Green default
         let fillSecondary = "#27ae60"; 
         let strokeColor = "#1b5e20";   
 
         const platform = (type || '').toLowerCase();
 
         if (platform.includes('twitch')) {
-            fillPrimary = "#9146FF";   
+            fillPrimary = "#9146FF";   // Twitch Purple
             fillSecondary = "#772CE8";
             strokeColor = "#3c1175";
         } else if (platform.includes('youtube')) {
-            fillPrimary = "#FF0000";   
+            fillPrimary = "#FF0000";   // YouTube Red
             fillSecondary = "#CC0000";
             strokeColor = "#660000";
         } else if (platform.includes('tiktok')) {
-            fillPrimary = "#111111";   
+            fillPrimary = "#111111";   // TikTok Black
             fillSecondary = "#222222";
-            strokeColor = "#00F2FE";   
+            strokeColor = "#00F2FE";   // TikTok Cyan
         }
 
         return `
@@ -202,6 +205,7 @@
         }
     }
 
+    // Animation Loop
     function animate(timestamp) {
         if (!lastTimestamp) lastTimestamp = timestamp;
         const delta = (timestamp - lastTimestamp) / 1000;
@@ -218,31 +222,31 @@
         requestAnimationFrame(animate);
     }
 
-    var iframe = document.createElement("iframe");
-    iframe.src = "https://vdo.socialstream.ninja/?ln&salt=vdo.ninja&password="+encodeURIComponent(password)+"&push&label=dock&vd=0&ad=0&novideo&noaudio&autostart&cleanoutput&room="+roomID;
-    iframe.style.cssText = "width: 0px; height: 0px; position: fixed; left: -100px; top: -100px;";
-    document.body.appendChild(iframe);
-    
-    window.addEventListener("message", function (e) {
-        if (e.source != iframe.contentWindow) return;
-        if (e.data && typeof e.data === "object" && e.data.dataReceived && e.data.dataReceived.overlayNinja) {
-            addMessageToOverlay(e.data.dataReceived.overlayNinja);
-        }
-    });
+    // Direct Pure WebSocket Connection
+    function connectWebSocket() {
+        var socketserver = new WebSocket("wss://io.socialstream.ninja");
+        
+        socketserver.onopen = function () {
+            socketserver.send(JSON.stringify({"join": roomID, "out": 3, "in": 4}));
+        };
 
-    var socketserver = new WebSocket("wss://io.socialstream.ninja");
-    socketserver.onopen = function (){
-        socketserver.send(JSON.stringify({"join": roomID, "out": 3, "in": 4}));
-    };
-    socketserver.addEventListener('message', function (event) {
-        if (event.data){
-            try {
-                var data = JSON.parse(event.data);
-                if (data) { addMessageToOverlay(data); }
-            } catch (error) {}
-        }
-    });
+        socketserver.onmessage = function (event) {
+            if (event.data) {
+                try {
+                    var data = JSON.parse(event.data);
+                    if (data) { 
+                        addMessageToOverlay(data); 
+                    }
+                } catch (error) {}
+            }
+        };
 
+        socketserver.onclose = function() {
+            setTimeout(connectWebSocket, 2000); // Auto reconnect if dropped
+        };
+    }
+
+    connectWebSocket();
     requestAnimationFrame(animate);
 </script>
 </body>
