@@ -13,7 +13,7 @@
           width: 100%;
           height: 100%;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background-color: transparent;
+          background-color: transparent !important;
           overflow: hidden;
           box-sizing: border-box;
       }
@@ -106,10 +106,11 @@
           color: #ffffff;
       }
 
-      .type-icon {
-          width: 24px;
-          height: 24px;
-          margin-left: 8px;
+      .separator-shell {
+          width: 28px;
+          height: 28px;
+          margin-left: 12px;
+          flex-shrink: 0;
           vertical-align: middle;
       }
     </style>
@@ -132,8 +133,49 @@
     let currentPosX = window.innerWidth;
     let lastTimestamp = null;
 
-    function addMessageToOverlay(data) {
-        if (!data) return;
+    // Detailed Vector Turtle Shell SVG Generator
+    function getShellSvg(type) {
+        let fillPrimary = "#2ecc71";   
+        let fillSecondary = "#27ae60"; 
+        let strokeColor = "#1b5e20";   
+
+        const platform = (type || '').toLowerCase();
+
+        if (platform.includes('twitch')) {
+            fillPrimary = "#9146FF";   
+            fillSecondary = "#772CE8";
+            strokeColor = "#3c1175";
+        } else if (platform.includes('youtube')) {
+            fillPrimary = "#FF0000";   
+            fillSecondary = "#CC0000";
+            strokeColor = "#660000";
+        } else if (platform.includes('tiktok')) {
+            fillPrimary = "#111111";   
+            fillSecondary = "#222222";
+            strokeColor = "#00F2FE";   
+        }
+
+        return `
+            <svg class="separator-shell" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 50 10 A 40 38 0 0 1 90 48 C 90 70 80 82 50 82 C 20 82 10 70 10 48 A 40 38 0 0 1 50 10 Z" fill="${fillPrimary}" stroke="${strokeColor}" stroke-width="5"/>
+                <path d="M 50 10 L 50 28 M 28 20 L 38 36 M 72 20 L 62 36 M 15 45 L 32 48 M 85 45 L 68 48 M 25 72 L 38 60 M 75 72 L 62 60 M 50 82 L 50 70" stroke="${strokeColor}" stroke-width="4" stroke-linecap="round"/>
+                <polygon points="50,28 62,36 62,60 50,70 38,60 38,36" fill="${fillSecondary}" stroke="${strokeColor}" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M 12 55 C 15 78 30 86 50 86 C 70 86 85 78 88 55 C 88 64 78 88 50 88 C 22 88 12 64 12 55 Z" fill="#e0e0e0" stroke="${strokeColor}" stroke-width="3"/>
+            </svg>
+        `;
+    }
+
+    function addMessageToOverlay(eventData) {
+        if (!eventData) return;
+
+        // Unwrap incoming Social Stream Ninja data
+        let data = eventData;
+        if (data.dataReceived && data.dataReceived.overlayNinja) {
+            data = data.dataReceived.overlayNinja;
+        } else if (data.overlayNinja) {
+            data = data.overlayNinja;
+        }
+        
         if (!data.chatname && !data.chatmessage && !data.hasDonation && !data.contentimg){
             return;
         }
@@ -153,18 +195,14 @@
         const avatarHtml = data.chatimg ? `<div class="avatar-wrapper"><div class="avatar" style="background-image: url('${data.chatimg}');"></div></div>` : '';
         const nameHtml = data.chatname ? `<div class="name-bg"><span class="name">${data.chatname}</span></div>` : '';
         const messageTextHtml = data.chatmessage ? `<span class="text">${data.chatmessage}</span>` : '';
-        
-        let typeIconHtml = '';
-        if (data.type) {
-            typeIconHtml = `<img class="type-icon" src="https://socialstream.ninja/images/${data.type}.png" onerror="this.style.display='none'" />`;
-        }
+        const shellIconHtml = getShellSvg(data.type);
 
         messageDiv.innerHTML = `
             <div class="message-content-wrapper">
                 ${avatarHtml}
                 ${nameHtml}
                 ${messageTextHtml}
-                ${typeIconHtml}
+                ${shellIconHtml}
             </div>
         `;
 
@@ -191,23 +229,31 @@
         requestAnimationFrame(animate);
     }
 
-    // NATIVE LISTENER
+    // Global PostMessage Listener (Catches both extension and dock events)
     window.addEventListener("message", function (e) {
         if (!e.data) return;
-        if (e.data.overlayNinja) {
-            addMessageToOverlay(e.data.overlayNinja);
-        } else if (e.data.dataReceived && e.data.dataReceived.overlayNinja) {
-            addMessageToOverlay(e.data.dataReceived.overlayNinja);
-        } else if (typeof e.data === "object" && (e.data.chatmessage || e.data.chatname)) {
-            addMessageToOverlay(e.data);
-        }
+        addMessageToOverlay(e.data);
     });
 
-    // VDO NINJA EMBEDDED FRAME
+    // Native Embedded Iframe Bridge
     var iframe = document.createElement("iframe");
     iframe.src = "https://vdo.socialstream.ninja/?ln&salt=vdo.ninja&password="+encodeURIComponent(password)+"&push&label=dock&vd=0&ad=0&novideo&noaudio&autostart&cleanoutput&room="+roomID;
     iframe.style.cssText = "width: 0px; height: 0px; position: fixed; left: -100px; top: -100px;";
     document.body.appendChild(iframe);
+
+    // WebSocket Backup Connection
+    var socketserver = new WebSocket("wss://io.socialstream.ninja");
+    socketserver.onopen = function (){
+        socketserver.send(JSON.stringify({"join": roomID, "out": 3, "in": 4}));
+    };
+    socketserver.addEventListener('message', function (event) {
+        if (event.data){
+            try {
+                var data = JSON.parse(event.data);
+                if (data) { addMessageToOverlay(data); }
+            } catch (error) {}
+        }
+    });
 
     requestAnimationFrame(animate);
 </script>
