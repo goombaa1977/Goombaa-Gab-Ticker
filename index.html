@@ -39,7 +39,7 @@
             gap: 15px;
             white-space: nowrap;
             will-change: transform;
-            padding-left: 100vw; /* Start off-screen right */
+            padding-left: 100vw;
             animation: ticker-scroll 25s linear infinite;
         }
 
@@ -48,7 +48,6 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* Chat Message Bubble Styling */
         .chat-bubble {
             display: inline-flex;
             align-items: center;
@@ -97,6 +96,13 @@
         <div id="ticker-track"></div>
     </div>
 
+    <!-- Fixed SSN Bridge iframe with feature permissions enabled -->
+    <iframe id="ssn-bridge" 
+            style="display:none;" 
+            allow="autoplay; camera; microphone; fullscreen; picture-in-picture; display-capture; screen-wake-lock"
+            src="https://socialstream.ninja/dock.html?session=aFC6DXe5k2&api=1">
+    </iframe>
+
     <script>
         const MAX_MESSAGES = 8;
         const DEFAULT_SESSION = 'aFC6DXe5k2';
@@ -106,7 +112,12 @@
 
         const track = document.getElementById('ticker-track');
 
-        // Turtle Shell Platform Icon Mappings
+        // Update iframe source dynamically if a session parameter is in the URL
+        const bridgeFrame = document.getElementById('ssn-bridge');
+        if (bridgeFrame && sessionId) {
+            bridgeFrame.src = `https://socialstream.ninja/dock.html?session=${sessionId}&api=1`;
+        }
+
         function getPlatformIcon(type) {
             const platform = (type || '').toLowerCase();
             if (platform.includes('youtube')) {
@@ -121,13 +132,14 @@
         function addMessageToTicker(data) {
             if (!data) return;
             
-            // Extract chat properties handling both extension & desktop app payload structures
             const name = data.chatname || data.name || (data.detail && data.detail.chatname);
             const msg = data.chatmessage || data.message || (data.detail && data.detail.chatmessage);
             const avatar = data.userIcon || data.avatar || (data.detail && data.detail.userIcon) || 'https://dummyimage.com/100x100/000/fff&text=G';
             const source = data.type || data.source || (data.detail && data.detail.type) || 'twitch';
 
             if (!name || !msg) return;
+
+            console.log("Adding chat bubble to ticker:", name, msg);
 
             const bubble = document.createElement('div');
             bubble.className = 'chat-bubble';
@@ -154,7 +166,7 @@
             );
         }
 
-        // Catch messages sent from SSN Dock/App (window postMessage)
+        // Event listener receiving message events from the bridge iframe or standalone app
         window.addEventListener('message', (event) => {
             if (!event.data) return;
             
@@ -163,17 +175,10 @@
                 try { data = JSON.parse(data); } catch (e) { return; }
             }
 
-            // Universal unpacker for Desktop App & Extension
             if (data.action === 'chat' || data.chatmessage || data.type === 'chat' || (data.detail && data.detail.chatmessage)) {
                 addMessageToTicker(data);
             }
         });
-
-        // Dynamically load SSN's official WebRTC listener bridge
-        const ssnIframe = document.createElement('iframe');
-        ssnIframe.style.display = 'none';
-        ssnIframe.src = `https://socialstream.ninja/dock.html?session=${sessionId}&api=1`;
-        document.body.appendChild(ssnIframe);
     </script>
 </body>
 </html>
