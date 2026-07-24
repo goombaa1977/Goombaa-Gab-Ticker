@@ -45,7 +45,6 @@
           gap: 15px;
       }
 
-      /* Large Message Bubble for Ticker Bar */
       .message {
           background: linear-gradient(145deg, #1a2a48, #162238);
           padding: 8px 18px;
@@ -117,7 +116,6 @@
           height: 24px;
       }
 
-      /* Turtle Shell Separator Styling */
       .separator-shell {
           width: 28px;
           height: 28px;
@@ -138,8 +136,7 @@
     var roomID = urlParams.get("session") || "aFC6DXe5k2";
     var password = urlParams.get("password") || urlParams.get("pass") || urlParams.get("pw") || "false";
     
-    // Ticker Settings
-    const SCROLL_SPEED = 120; // Pixels per second
+    const SCROLL_SPEED = 120;
     const MAX_MESSAGES = 30;
     
     const tickerTrack = document.getElementById('ticker-track');
@@ -179,7 +176,6 @@
         const nameHtml = data.chatname ? `<div class="name-bg"><span class="name">${data.chatname}</span></div>` : '';
         const messageTextHtml = data.chatmessage ? `<span class="text">${data.chatmessage}</span>` : '';
 
-        // Green Turtle Shell SVG
         const shellIconHtml = `
             <svg class="separator-shell" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <path d="M 50 10 A 40 38 0 0 1 90 48 C 90 70 80 82 50 82 C 20 82 10 70 10 48 A 40 38 0 0 1 50 10 Z" fill="#2ecc71" stroke="#1b5e20" stroke-width="5"/>
@@ -207,7 +203,6 @@
         }
     }
 
-    // Continuous Smooth Animation Loop
     function animate(timestamp) {
         if (!lastTimestamp) lastTimestamp = timestamp;
         const delta = (timestamp - lastTimestamp) / 1000;
@@ -224,7 +219,6 @@
         requestAnimationFrame(animate);
     }
 
-    // Direct WebRTC/Iframe Bridge Connection
     var iframe = document.createElement("iframe");
     iframe.src = "https://vdo.socialstream.ninja/?ln&salt=vdo.ninja&password="+encodeURIComponent(password)+"&push&label=dock&vd=0&ad=0&novideo&noaudio&autostart&cleanoutput&room="+roomID;
     iframe.style.cssText = "width: 0px; height: 0px; position: fixed; left: -100px; top: -100px;";
@@ -237,7 +231,6 @@
         }
     });
 
-    // Social Stream Ninja WebSocket Connection
     var socketserver = new WebSocket("wss://io.socialstream.ninja");
     socketserver.onopen = function (){
         socketserver.send(JSON.stringify({"join": roomID, "out": 3, "in": 4}));
