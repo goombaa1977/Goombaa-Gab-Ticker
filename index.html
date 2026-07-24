@@ -33,6 +33,7 @@
           align-items: center;
           overflow: hidden;
           white-space: nowrap;
+          background: transparent;
       }
 
       #ticker-track {
@@ -45,7 +46,6 @@
           gap: 15px;
       }
 
-      /* Large Message Bubble for Ticker Bar */
       .message {
           background: linear-gradient(145deg, #1a2a48, #162238);
           padding: 8px 18px;
@@ -106,7 +106,6 @@
           color: #ffffff;
       }
 
-      /* Dynamic Turtle Shell Styling */
       .separator-shell {
           width: 28px;
           height: 28px;
@@ -127,7 +126,6 @@
     var roomID = urlParams.get("session") || "aFC6DXe5k2";
     var password = urlParams.get("password") || urlParams.get("pass") || urlParams.get("pw") || "false";
     
-    // Ticker Settings
     const SCROLL_SPEED = 145; 
     const MAX_MESSAGES = 8;   
     
@@ -135,26 +133,25 @@
     let currentPosX = window.innerWidth;
     let lastTimestamp = null;
 
-    // Helper function to return platform-specific shell SVG colors
     function getShellSvg(type) {
-        let fillPrimary = "#2ecc71";   // Default Green
+        let fillPrimary = "#2ecc71";   
         let fillSecondary = "#27ae60"; 
         let strokeColor = "#1b5e20";   
 
         const platform = (type || '').toLowerCase();
 
         if (platform.includes('twitch')) {
-            fillPrimary = "#9146FF";   // Twitch Purple
+            fillPrimary = "#9146FF";   
             fillSecondary = "#772CE8";
             strokeColor = "#3c1175";
         } else if (platform.includes('youtube')) {
-            fillPrimary = "#FF0000";   // YouTube Red
+            fillPrimary = "#FF0000";   
             fillSecondary = "#CC0000";
             strokeColor = "#660000";
         } else if (platform.includes('tiktok')) {
-            fillPrimary = "#111111";   // TikTok Black
+            fillPrimary = "#111111";   
             fillSecondary = "#222222";
-            strokeColor = "#00F2FE";   // TikTok Cyan Accent
+            strokeColor = "#00F2FE";   
         }
 
         return `
@@ -213,7 +210,7 @@
         currentPosX -= SCROLL_SPEED * delta;
 
         const trackWidth = tickerTrack.offsetWidth;
-        if (currentPosX < -trackWidth && trackWidth > 0) {
+        if (currentPosX < -trackWidth) {
             currentPosX = window.innerWidth;
         }
 
