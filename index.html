@@ -45,7 +45,6 @@
           gap: 15px;
       }
 
-      /* Large Message Bubble for Ticker Bar */
       .message {
           background: linear-gradient(145deg, #1a2a48, #162238);
           padding: 8px 18px;
@@ -106,7 +105,6 @@
           color: #ffffff;
       }
 
-      /* Dynamic Turtle Shell Styling */
       .separator-shell {
           width: 28px;
           height: 28px;
@@ -127,34 +125,32 @@
     var roomID = urlParams.get("session") || "aFC6DXe5k2";
     var password = urlParams.get("password") || urlParams.get("pass") || urlParams.get("pw") || "false";
     
-    // Ticker Settings
-    const SCROLL_SPEED = 145; // Increased speed slightly (was 120)
+    const SCROLL_SPEED = 145;
     const MAX_MESSAGES = 8;   
     
     const tickerTrack = document.getElementById('ticker-track');
     let currentPosX = window.innerWidth;
     let lastTimestamp = null;
 
-    // Helper function to return platform-specific shell SVG colors
     function getShellSvg(type) {
-        let fillPrimary = "#2ecc71";   // Default Green
+        let fillPrimary = "#2ecc71";   
         let fillSecondary = "#27ae60"; 
         let strokeColor = "#1b5e20";   
 
         const platform = (type || '').toLowerCase();
 
         if (platform.includes('twitch')) {
-            fillPrimary = "#9146FF";   // Twitch Purple
+            fillPrimary = "#9146FF";   
             fillSecondary = "#772CE8";
             strokeColor = "#3c1175";
         } else if (platform.includes('youtube')) {
-            fillPrimary = "#FF0000";   // YouTube Red
+            fillPrimary = "#FF0000";   
             fillSecondary = "#CC0000";
             strokeColor = "#660000";
         } else if (platform.includes('tiktok')) {
-            fillPrimary = "#111111";   // TikTok Black
+            fillPrimary = "#111111";   
             fillSecondary = "#222222";
-            strokeColor = "#00F2FE";   // TikTok Cyan Accent
+            strokeColor = "#00F2FE";   
         }
 
         return `
@@ -189,7 +185,6 @@
         const messageTextHtml = data.chatmessage ? `<span class="text">${data.chatmessage}</span>` : '';
         const shellIconHtml = getShellSvg(data.type);
 
-        // Stripped out source icon and badges for a clean look
         messageDiv.innerHTML = `
             <div class="message-content-wrapper">
                 ${avatarHtml}
@@ -199,10 +194,22 @@
             </div>
         `;
 
+        // If the track is completely off-screen, reset the lead position to the right edge
+        const currentTrackWidth = tickerTrack.offsetWidth;
+        if (currentPosX < -currentTrackWidth) {
+            currentPosX = window.innerWidth;
+        }
+
         tickerTrack.appendChild(messageDiv);
         
+        // Remove oldest message without resetting scroll positions
         while (tickerTrack.children.length > MAX_MESSAGES) {
-            tickerTrack.removeChild(tickerTrack.firstChild);
+            const firstChild = tickerTrack.firstChild;
+            if (firstChild) {
+                const childWidth = firstChild.offsetWidth + 15; // Width + gap
+                tickerTrack.removeChild(firstChild);
+                currentPosX += childWidth; // Adjust X position so remaining elements don't jump
+            }
         }
     }
 
