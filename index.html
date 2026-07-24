@@ -117,10 +117,13 @@
           height: 24px;
       }
 
-      .separator {
-          font-size: 28px;
+      /* Turtle Shell Separator Styling */
+      .separator-shell {
+          width: 28px;
+          height: 28px;
           margin-left: 12px;
-          color: #ff9d00;
+          flex-shrink: 0;
+          vertical-align: middle;
       }
     </style>
 </head>
@@ -176,6 +179,16 @@
         const nameHtml = data.chatname ? `<div class="name-bg"><span class="name">${data.chatname}</span></div>` : '';
         const messageTextHtml = data.chatmessage ? `<span class="text">${data.chatmessage}</span>` : '';
 
+        // Green Turtle Shell SVG
+        const shellIconHtml = `
+            <svg class="separator-shell" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 50 10 A 40 38 0 0 1 90 48 C 90 70 80 82 50 82 C 20 82 10 70 10 48 A 40 38 0 0 1 50 10 Z" fill="#2ecc71" stroke="#1b5e20" stroke-width="5"/>
+                <path d="M 50 10 L 50 28 M 28 20 L 38 36 M 72 20 L 62 36 M 15 45 L 32 48 M 85 45 L 68 48 M 25 72 L 38 60 M 75 72 L 62 60 M 50 82 L 50 70" stroke="#1b5e20" stroke-width="4" stroke-linecap="round"/>
+                <polygon points="50,28 62,36 62,60 50,70 38,60 38,36" fill="#27ae60" stroke="#1b5e20" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M 12 55 C 15 78 30 86 50 86 C 70 86 85 78 88 55 C 88 64 78 88 50 88 C 22 88 12 64 12 55 Z" fill="#e0e0e0" stroke="#1b5e20" stroke-width="3"/>
+            </svg>
+        `;
+
         messageDiv.innerHTML = `
             <div class="message-content-wrapper">
                 ${avatarHtml}
@@ -183,7 +196,7 @@
                 ${sourceIconHtml}
                 ${chatbadgesHtml}
                 ${messageTextHtml}
-                <span class="separator">🔥</span>
+                ${shellIconHtml}
             </div>
         `;
 
